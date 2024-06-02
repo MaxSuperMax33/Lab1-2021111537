@@ -1,4 +1,8 @@
 To @ explore strange new worlds,
 To seek out new life and new civilizations?sdsd
 warning: LF will be replaced by CRLF in output.
+<<<<<<< HEAD
 The file will have its original line endings in your 
+=======
+The file will have its original line endings in your working directorysccccccc
+>>>>>>> B2
