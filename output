@@ -1,4 +1,5 @@
 digraph G {
+re
   "new" -> "worlds" [label="1", color="black"]
   "new" -> "civilizations" [label="1", color="black"]
   "new" -> "life" [label="1", color="red"]
