@@ -10,7 +10,7 @@ public class Lab1Test {
 
     @Before
     public void setUp() {
-        lab1 = new Lab1(); // 假设Lab1类有合适的构造器
+        lab1 = new Lab1();
     }
 
     @Test
