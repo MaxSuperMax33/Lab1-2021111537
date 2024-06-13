@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import java.security.SecureRandom;
 
 public class Lab1 {
     private final Map<String, Map<String, Integer>> graph;
@@ -103,16 +104,18 @@ public class Lab1 {
 
     public void showDirectedGraph(Map<String, Map<String, Integer>> highlight) {
         StringBuilder newText = new StringBuilder();
-        newText.append("digraph G {\n");
-        for (String source : graph.keySet()) {
-            Map<String, Integer> edges = graph.get(source);
-            for (String target : edges.keySet()) {
-                int weight = edges.get(target);
+        newText.append("digraph G {\nrankdir=LR\n");
+        for (Map.Entry<String, Map<String, Integer>> sourceEntry : graph.entrySet()) {
+            String source = sourceEntry.getKey();
+            Map<String, Integer> edges = sourceEntry.getValue();
+            for (Map.Entry<String, Integer> edgeEntry : edges.entrySet()) {
+                String target = edgeEntry.getKey();
+                int weight = edgeEntry.getValue();
                 String color = "black";
-                if(highlight.containsKey(source) && highlight.get(source).containsKey(target)) {
+                if (highlight.containsKey(source) && highlight.get(source).containsKey(target)) {
                     color = "red";
                 }
-                newText.append(String.format("  \"%s\" -> \"%s\" [label=\"%d\", color=\"%s\"]\n", source, target, weight, color));
+                newText.append(String.format("  \"%s\" -> \"%s\" [label=\"%d\", color=\"%s\"]%n", source, target, weight, color));
             }
         }
 
@@ -189,54 +192,61 @@ public class Lab1 {
     }
 
     public void calcShortestPath(String word1, String word2) {
-        Map<String, Integer> distances = new HashMap<>();
-        Map<String, String> predecessors = new HashMap<>();
-        Set<String> visited = new HashSet<>();
-        PriorityQueue<String> priorityQueue = new PriorityQueue<>(Comparator.comparingInt(distances::get));
-
-        for (String word : node.keySet()) {
-            distances.put(word, Integer.MAX_VALUE);
+        if (!node.containsKey(word1) || !node.containsKey(word2)) {
+            System.out.println("No word1 or word2 in the graph!");
+            return;
         }
-        distances.put(word1, 0);
-        priorityQueue.add(word1);
-
-        while (!priorityQueue.isEmpty()) {
-            String current = priorityQueue.poll();
-            if (!visited.add(current)) {
-                continue;
+        Map<String, Integer> dis = new HashMap<>();
+        Map<String, String> pre = new HashMap<>();
+        Map<String, Boolean> vis = new HashMap<>();
+        for (String word : node.keySet()) {
+            dis.put(word, Integer.MAX_VALUE);
+            vis.put(word, false);
+        }
+        dis.put(word1, 0);
+        while (true) {
+            String now = null;
+            for (String word : node.keySet()) {
+                if (vis.get(word) == true) {
+                    continue;
+                }
+                if (now == null || dis.get(word) < dis.get(now)) {
+                    now = word;
+                }
             }
-
-            if (current.equals(word2)) {
+            if (now.equals(word2)) {
                 break;
             }
-
-            for (Map.Entry<String, Integer> neighborEntry : graph.get(current).entrySet()) {
-                String neighbor = neighborEntry.getKey();
-                int weight = neighborEntry.getValue();
-                int newDist = distances.get(current) + weight;
-
-                if (newDist < distances.get(neighbor)) {
-                    distances.put(neighbor, newDist);
-                    predecessors.put(neighbor, current);
-                    priorityQueue.add(neighbor);
+            vis.put(now, true);
+            for (String nextWord : graph.get(now).keySet()) {
+                int weight = graph.get(now).get(nextWord);
+                if (dis.get(nextWord) > dis.get(now) + weight && dis.get(now)!=Integer.MAX_VALUE) {
+                    dis.put(nextWord, dis.get(now) + weight);
+                    pre.put(nextWord, now);
                 }
             }
         }
-
-        if (distances.get(word2) == Integer.MAX_VALUE) {
+        if (dis.get(word2) == Integer.MAX_VALUE) {
             System.out.println("Word2 unreachable from word1!");
+            return;
         } else {
-            System.out.println("Shortest Path: " + distances.get(word2));
+            System.out.println("Shortest Path: " + dis.get(word2));
             Map<String, Map<String, Integer>> highlight = new HashMap<>();
-            String current = word2;
-            while (predecessors.containsKey(current)) {
-                String predecessor = predecessors.get(current);
-                highlight.computeIfAbsent(predecessor, k -> new HashMap<>()).put(current, 1);
-                current = predecessor;
+            String now = word2;
+            while (pre.containsKey(now)) {
+                String tmp = pre.get(now);
+                if (highlight.containsKey(tmp) == false) {
+                    highlight.put(tmp, new HashMap<>());
+                }
+                if (highlight.get(tmp).containsKey(now) == false) {
+                    highlight.get(tmp).put(now, 1);
+                }
+                now = tmp;
             }
             showDirectedGraph(highlight);
         }
     }
+
 
     private static Map<String, Map<String, Integer>> deepCopyGraph(Map<String, Map<String, Integer>> original) {
         return original.entrySet().stream()
@@ -248,9 +258,9 @@ public class Lab1 {
 
     public void randomWalk() {
         Map<String, Map<String, Integer>> g = deepCopyGraph(graph);
-        Random random = new Random();
+        SecureRandom secureRandom = new SecureRandom();
         List<String> tmp = new ArrayList<>(node.keySet());
-        String now = tmp.get(random.nextInt(tmp.size()));
+        String now = tmp.get(secureRandom.nextInt(tmp.size()));
         AtomicBoolean running = new AtomicBoolean(true);
         Scanner scanner = new Scanner(System.in);
 
@@ -282,7 +292,7 @@ public class Lab1 {
                 break;
             }
             List<String> cad = new ArrayList<>(g.get(now).keySet());
-            String next = cad.get(random.nextInt(cad.size()));
+            String next = cad.get(secureRandom.nextInt(cad.size()));
             g.get(now).remove(next);
             now = next;
 
